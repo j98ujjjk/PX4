@@ -104,9 +104,28 @@ RTL::on_activation()
 			_rtl_state = RTL_STATE_LANDED;
 			mavlink_log_critical(_navigator->get_mavlink_log_pub(), "Already landed, not executing RTL");
 
+		/* for multicopters:
+		 * if we're already inside the acceptance radius at home position, don't climb again
+		 */
+		} else if (_navigator->get_vstatus()->is_rotary_wing &&
+				home_dist < _param_rtl_min_dist.get()) {
+
+			/* if still above descend altitude, go to descend, otherwise go to loiter directly */
+			if (_navigator->get_global_position()->alt > _navigator->get_home_position()->alt
+					+ _param_descend_alt.get()) {
+				_rtl_state = RTL_STATE_DESCEND;
+
+			} else {
+				/* set altitude setpoint to current altitude */
+				_rtl_state = RTL_STATE_LOITER;
+				_mission_item.altitude_is_relative = false;
+				_mission_item.altitude = _navigator->get_global_position()->alt;
+				_rtl_start_lock = false;
+			}
+
 		/* if lower than return altitude, climb up first */
-		} else if (home_dist > _param_rtl_min_dist.get() && _navigator->get_global_position()->alt < _navigator->get_home_position()->alt
-			   + _param_return_alt.get()) {
+		} else if (_navigator->get_global_position()->alt < _navigator->get_home_position()->alt
+				+ _param_return_alt.get()) {
 			_rtl_state = RTL_STATE_CLIMB;
 
 		/* otherwise go straight to return */
