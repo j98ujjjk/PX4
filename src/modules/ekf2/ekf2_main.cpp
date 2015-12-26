@@ -299,9 +299,8 @@ void Ekf2::task_main()
 			update_parameters();
 		}
 
-		hrt_abstime now = hrt_absolute_time();
 		// push imu data into estimator
-		_ekf->setIMUData(now, sensors.gyro_integral_dt[0], sensors.accelerometer_integral_dt[0],
+		_ekf->setIMUData(sensors.gyro_timestamp[0], sensors.gyro_integral_dt[0], sensors.accelerometer_integral_dt[0],
 				 &sensors.gyro_integral_rad[0], &sensors.accelerometer_integral_m_s[0]);
 
 		// read mag data
