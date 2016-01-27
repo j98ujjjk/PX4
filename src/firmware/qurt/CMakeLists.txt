@@ -11,7 +11,7 @@ FASTRPC_STUB_GEN(px4muorb.idl)
 # Enable build without HexagonSDK to check link dependencies
 if ("${QURT_ENABLE_STUBS}" STREQUAL "1")
 	add_definitions(-DQURT_EXE_BUILD)
-	add_executable(mainapp 
+	add_executable(mainapp
 		${CMAKE_SOURCE_DIR}/src/platforms/qurt/dspal/dspal_stub.c
 		${CMAKE_BINARY_DIR}/apps.h)
 else()
@@ -20,9 +20,12 @@ else()
 	message("target_libraries = ${target_libraries}")
 	# Generate the DSP lib and stubs but not the apps side executable
 	# The Apps side executable is generated via the posix_eagle_xxxx target
+	# TODO-JYW: TESTING-TESTING
 	QURT_LIB(APP_NAME mainapp
 		IDL_NAME px4muorb
 		SOURCES
+		${CMAKE_SOURCE_DIR}/src/platforms/qurt/dspal/dspal_stub.c
+		${CMAKE_SOURCE_DIR}/build_qurt_eagle_release/src/firmware/qurt/px4muorb_skel.c
 		${CMAKE_BINARY_DIR}/apps.h
 		LINK_LIBS
 		${module_libraries}
@@ -30,7 +33,7 @@ else()
 		df_driver_framework
 		m
 		)
-		
+
 endif()
 
 # vim: set noet ft=cmake fenc=utf-8 ff=unix :
