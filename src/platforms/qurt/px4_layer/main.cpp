@@ -36,6 +36,9 @@
  * @author Mark Charlebois <charlebm@gmail.com>
  */
 
+// TODO-JYW: TESTING-TESTING:
+#define DEBUG_BUILD	1
+
 #include <px4_middleware.h>
 #include <px4_tasks.h>
 #include <px4_time.h>
@@ -174,6 +177,7 @@ __END_DECLS
 
 const char *get_commands()
 {
+	PX4_INFO("attempting to open the ADSP command file: %s", COMMANDS_ADSP_FILE);
 	int fd = open(COMMANDS_ADSP_FILE, O_RDONLY);
 
 	if (fd > 0) {
