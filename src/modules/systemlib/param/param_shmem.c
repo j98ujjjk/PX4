@@ -44,6 +44,9 @@
  * and background parameter saving.
  */
 
+// TODO-JYW: TESTING-TESTING
+#define DEBUG_BUILD 1
+
 //#include <debug.h>
 #include <px4_defines.h>
 #include <px4_posix.h>
@@ -517,9 +520,13 @@ param_get(param_t param, void *val)
 
 #ifdef ENABLE_SHMEM_DEBUG
 
-	if (param_type(param) == PARAM_TYPE_INT32)	{ PX4_INFO("param_get for %s : %d\n", param_name(param), *(int *)val); }
+	// TODO-JYW: TESTING-TESTING:
+	if (param_type(param) == PARAM_TYPE_INT32)	{ PX4_INFO("param_get for %s : %d\n", param_name(param), ((union param_value_u *)val)->i); }
+//	if (param_type(param) == PARAM_TYPE_INT32)	{ PX4_INFO("param_get for %s : %d\n", param_name(param), *(int *)val); }
 
-	else if (param_type(param) == PARAM_TYPE_FLOAT) { PX4_INFO("param_get for %s : %f\n", param_name(param), *(double *)val); }
+	// TODO-JYW: TESTING-TESTING:
+	else if (param_type(param) == PARAM_TYPE_FLOAT) { PX4_INFO("param_get for %s : %f\n", param_name(param), (double)((union param_value_u *)val)->f); }
+//	else if (param_type(param) == PARAM_TYPE_FLOAT) { PX4_INFO("param_get for %s : %f\n", param_name(param), *(double *)val); }
 
 	else { PX4_INFO("Unknown param type for %s\n", param_name(param)); }
 
@@ -535,6 +542,9 @@ param_set_internal(param_t param, const void *val, bool mark_saved, bool notify_
 {
 	int result = -1;
 	bool params_changed = false;
+
+	PX4_DEBUG("param_set_internal params: param = %d, val = 0x%X, mark_saved: %d, notify_changes: %d",
+			param, val, (int)mark_saved, (int)notify_changes);
 
 	param_lock();
 
@@ -613,7 +623,7 @@ out:
 	/*
 	 * If we set something, now that we have unlocked, go ahead and advertise that
 	 * a thing has been set.
-	 */
+1	 */
 
 	if (!param_import_done) { notify_changes = 0; }
 
@@ -627,9 +637,13 @@ out:
 
 #ifdef ENABLE_SHMEM_DEBUG
 
-	if (param_type(param) == PARAM_TYPE_INT32) {PX4_INFO("param_set for %s : %d\n", param_name(param), *(int *)val);}
+// TODO-JYW: TESTING-TESTING:
+	if (param_type(param) == PARAM_TYPE_INT32) {PX4_INFO("param_set for %s : %d\n", param_name(param), ((union param_value_u *)val)->i);}
+//	if (param_type(param) == PARAM_TYPE_INT32) {PX4_INFO("param_set for %s : %d\n", param_name(param), *(int *)val);}
 
-	else if (param_type(param) == PARAM_TYPE_FLOAT) {PX4_INFO("param_set for %s : %f\n", param_name(param), *(double *)val);}
+// TODO-JYW: TESTING-TESTING:
+	else if (param_type(param) == PARAM_TYPE_FLOAT) {PX4_INFO("param_set for %s : %f\n", param_name(param), (double)((union param_value_u *)val)->f);}
+//	else if (param_type(param) == PARAM_TYPE_FLOAT) {PX4_INFO("param_set for %s : %f\n", param_name(param), *(double *)val);}
 
 	else {PX4_INFO("Unknown param type for %s\n", param_name(param));}
 
@@ -786,34 +800,55 @@ param_get_default_file(void)
 int
 param_save_default(void)
 {
-	int res;
-	int fd;
+	int res = OK;
+	int fd = 0;
+	int is_locked = 0;
 
 	const char *filename = param_get_default_file();
 
+	// TODO-JYW: TESTING-TESTING
+	PX4_INFO("Calling get_shmem_lock from param_save_default.");
+
 	if (get_shmem_lock() != 0) {
 		PX4_ERR("Could not get shmem lock\n");
-		return 0;
+		res = ERROR;
+		goto exit;
 	}
+	is_locked = 1;
 
-	fd = PARAM_OPEN(filename, O_WRONLY | O_CREAT, PX4_O_MODE_666);
+// TODO-JYW: TESTING-TESTING:
+	fd = open(filename, O_WRONLY | O_CREAT);
+//	fd = PARAM_OPEN(filename, O_WRONLY | O_CREAT, PX4_O_MODE_666);
+// TODO-JYW: TESTING-TESTING:
 
 	if (fd < 0) {
-		warn("failed to open param file: %s", filename);
-		return ERROR;
+		PX4_ERR("failed to open param file: %s", filename);
+		res = ERROR;
+		goto exit;
 	}
 
 	res = param_export(fd, false);
 
 	if (res != OK) {
-		warnx("failed to write parameters to file: %s", filename);
+		PX4_ERR("failed to write parameters to file: %s", filename);
+		goto exit;
 	}
 
-	PARAM_CLOSE(fd);
+exit:
+	// TODO-JYW: TESTING-TESTING:
+	if (fd > 0) {
+		close(fd);
+	}
+	//	CLOSE(fd);
+	// TODO-JYW: TESTING-TESTING:
 
-	release_shmem_lock();
+	if (is_locked) {
+		release_shmem_lock();
+	}
 
-	PX4_INFO("saving params done\n");
+	if (res == OK) {
+		PX4_INFO("saving params completed successfully\n");
+	}
 
 	return res;
 }
@@ -855,10 +890,17 @@ param_load_default(void)
 static int
 param_load_default_no_notify(void)
 {
-	if (get_shmem_lock() != 0) {
-		PX4_ERR("Could not get shmem lock\n");
-		return 0;
-	}
+	// TODO-JYW: TESTING-TESTING
+	PX4_INFO("Calling get_shmem_lock from param_load_default_no_notify.");
+
+	// TODO-JYW: TESTING-TESTING: The shared memory lock should not be applied at this level
+	// since it will nest with the shared memory updates caused by the reading of the
+	// default parameter file.
+//	if (get_shmem_lock() != 0) {
+//		PX4_ERR("Could not get shmem lock\n");
+//		return 0;
+//	}
+	// TODO-JYW: TESTING-TESTING: Code commented out.
 
 	int fd_load = open(param_get_default_file(), O_RDONLY);
 
@@ -880,7 +922,9 @@ param_load_default_no_notify(void)
 
 	PX4_INFO("param loading done\n");
 
-	release_shmem_lock();
+	// TODO-JYW: TESTING-TESTING: Code commented out.
+	// release_shmem_lock();
+	// TODO-JYW: TESTING-TESTING: Code commented out.
 
 	if (result != 0) {
 		warn("error reading parameters from '%s'", param_get_default_file());

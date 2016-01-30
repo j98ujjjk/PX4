@@ -32,6 +32,9 @@
  *
  ****************************************************************************/
 
+// TODO-JYW: TESTING-TESTING
+#define DEBUG_BUILD 1
+
 #include <px4_defines.h>
 #include <string.h>
 #include <stdbool.h>
@@ -48,6 +51,9 @@
 #include <drivers/drv_hrt.h>
 
 #define SHMEM_DEBUG
+
+// TODO-JYW: TESTING-TESTING:
+#define DEBUG_BUILD 1
 
 int mem_fd;
 unsigned char *map_base, *virt_addr;
@@ -91,6 +97,7 @@ int get_shmem_lock(void)
 
 	if (i > 100) { return -1; }
 
+	PX4_INFO("got shmem lock");
 	return 0; //got the lock
 
 }
@@ -100,6 +107,7 @@ void release_shmem_lock(void)
 	unsigned char *lock = (unsigned char *)(MAP_ADDRESS + LOCK_OFFSET);
 
 	*lock = 1;
+	PX4_INFO("released shmem lock");
 	return;
 }
 
@@ -117,6 +125,9 @@ void copy_params_to_shmem(struct param_info_s *param_info_base)
 {
 	param_t	param;
 	unsigned int i;
+
+	// TODO-JYW: TESTING-TESTING
+	PX4_INFO("Calling get_shmem_lock from copy_params_to_shmem.");
 
 	if (get_shmem_lock() != 0) {
 		PX4_INFO("Could not get shmem lock\n");
@@ -165,6 +176,9 @@ void update_to_shmem(param_t param, union param_value_u value)
 		return;
 	}
 
+	// TODO-JYW: TESTING-TESTING
+	PX4_INFO("Calling get_shmem_lock from update_to_shmem.");
+
 	if (get_shmem_lock() != 0) {
 		PX4_ERR("Could not get shmem lock\n");
 		return;
@@ -196,6 +210,9 @@ static void update_index_from_shmem(void)
 {
 	unsigned int i;
 
+	// TODO-JYW: TESTING-TESTING
+	PX4_INFO("Calling get_shmem_lock from update_index_from_shmem.");
+
 	if (get_shmem_lock() != 0) {
 		PX4_ERR("Could not get shmem lock\n");
 		return;
@@ -214,6 +231,9 @@ static void update_index_from_shmem(void)
 static void update_value_from_shmem(param_t param, union param_value_u *value)
 {
 	unsigned int byte_changed, bit_changed;
+
+	// TODO-JYW: TESTING-TESTING
+	PX4_INFO("Calling get_shmem_lock from update_value_from_shmem.");
 
 	if (get_shmem_lock() != 0) {
 		PX4_ERR("Could not get shmem lock\n");
