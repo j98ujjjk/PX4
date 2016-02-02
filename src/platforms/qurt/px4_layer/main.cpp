@@ -53,6 +53,9 @@
 #include "get_commands.h"
 #include "apps.h"
 
+// TODO-JYW: TESTING-TESTING:
+#define DEBUG_BUILD 1
+
 using namespace std;
 
 extern void init_app_map(map<string, px4_main_t> &apps);
