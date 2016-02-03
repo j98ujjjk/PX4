@@ -40,10 +40,7 @@
 
 #define LOG_TAG "uORBKraitFastRpcChannel.cpp"
 
-// TODO-JYW: TESTING-TESTING: Uncomment when finished.
 uORB::KraitFastRpcChannel *uORB::KraitFastRpcChannel::_InstancePtr = NULL;
-// uORB::KraitFastRpcChannel uORB::KraitFastRpcChannel::_Instance;
-
 
 static void DumpData(uint8_t *buffer, int32_t length, int32_t num_topics);
 

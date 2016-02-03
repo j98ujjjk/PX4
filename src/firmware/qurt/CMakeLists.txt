@@ -20,7 +20,6 @@ else()
 	message("target_libraries = ${target_libraries}")
 	# Generate the DSP lib and stubs but not the apps side executable
 	# The Apps side executable is generated via the posix_eagle_xxxx target
-	# TODO-JYW: TESTING-TESTING
 	QURT_LIB(APP_NAME mainapp
 		IDL_NAME px4muorb
 		SOURCES

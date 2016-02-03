@@ -44,9 +44,6 @@
  * and background parameter saving.
  */
 
-// TODO-JYW: TESTING-TESTING
-#define DEBUG_BUILD 1
-
 //#include <debug.h>
 #include <px4_defines.h>
 #include <px4_posix.h>
@@ -520,14 +517,8 @@ param_get(param_t param, void *val)
 
 #ifdef ENABLE_SHMEM_DEBUG
 
-	// TODO-JYW: TESTING-TESTING:
 	if (param_type(param) == PARAM_TYPE_INT32)	{ PX4_INFO("param_get for %s : %d\n", param_name(param), ((union param_value_u *)val)->i); }
-//	if (param_type(param) == PARAM_TYPE_INT32)	{ PX4_INFO("param_get for %s : %d\n", param_name(param), *(int *)val); }
-
-	// TODO-JYW: TESTING-TESTING:
 	else if (param_type(param) == PARAM_TYPE_FLOAT) { PX4_INFO("param_get for %s : %f\n", param_name(param), (double)((union param_value_u *)val)->f); }
-//	else if (param_type(param) == PARAM_TYPE_FLOAT) { PX4_INFO("param_get for %s : %f\n", param_name(param), *(double *)val); }
-
 	else { PX4_INFO("Unknown param type for %s\n", param_name(param)); }
 
 #endif
@@ -637,14 +628,8 @@ out:
 
 #ifdef ENABLE_SHMEM_DEBUG
 
-// TODO-JYW: TESTING-TESTING:
 	if (param_type(param) == PARAM_TYPE_INT32) {PX4_INFO("param_set for %s : %d\n", param_name(param), ((union param_value_u *)val)->i);}
-//	if (param_type(param) == PARAM_TYPE_INT32) {PX4_INFO("param_set for %s : %d\n", param_name(param), *(int *)val);}
-
-// TODO-JYW: TESTING-TESTING:
 	else if (param_type(param) == PARAM_TYPE_FLOAT) {PX4_INFO("param_set for %s : %f\n", param_name(param), (double)((union param_value_u *)val)->f);}
-//	else if (param_type(param) == PARAM_TYPE_FLOAT) {PX4_INFO("param_set for %s : %f\n", param_name(param), *(double *)val);}
-
 	else {PX4_INFO("Unknown param type for %s\n", param_name(param));}
 
 #endif
@@ -806,9 +791,6 @@ param_save_default(void)
 
 	const char *filename = param_get_default_file();
 
-	// TODO-JYW: TESTING-TESTING
-	PX4_INFO("Calling get_shmem_lock from param_save_default.");
-
 	if (get_shmem_lock() != 0) {
 		PX4_ERR("Could not get shmem lock\n");
 		res = ERROR;
@@ -890,18 +872,6 @@ param_load_default(void)
 static int
 param_load_default_no_notify(void)
 {
-	// TODO-JYW: TESTING-TESTING
-	PX4_INFO("Calling get_shmem_lock from param_load_default_no_notify.");
-
-	// TODO-JYW: TESTING-TESTING: The shared memory lock should not be applied at this level
-	// since it will nest with the shared memory updates caused by the reading of the
-	// default parameter file.
-//	if (get_shmem_lock() != 0) {
-//		PX4_ERR("Could not get shmem lock\n");
-//		return 0;
-//	}
-	// TODO-JYW: TESTING-TESTING: Code commented out.
-
 	int fd_load = open(param_get_default_file(), O_RDONLY);
 
 	if (fd_load < 0) {
@@ -921,10 +891,6 @@ param_load_default_no_notify(void)
 	close(fd_load);
 
 	PX4_INFO("param loading done\n");
-
-	// TODO-JYW: TESTING-TESTING: Code commented out.
-	// release_shmem_lock();
-	// TODO-JYW: TESTING-TESTING: Code commented out.
 
 	if (result != 0) {
 		warn("error reading parameters from '%s'", param_get_default_file());
