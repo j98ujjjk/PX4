@@ -55,14 +55,7 @@ public:
 	 */
 	static uORB::KraitFastRpcChannel *GetInstance()
 	{
-// TODO-JYW: TESTING-TESTING:
-		if (_InstancePtr == NULL)
-		{
-			_InstancePtr = new uORB::KraitFastRpcChannel();
-		}
-		return _InstancePtr;
-
-//		return &(_Instance);
+		return &(_Instance);
 	}
 
 	/**
@@ -127,9 +120,6 @@ public:
 
 private: // data members
 	static uORB::KraitFastRpcChannel _Instance;
-	// TODO-JYW: TESTING-TESTING
-	static uORB::KraitFastRpcChannel *_InstancePtr;
-
 	uORBCommunicator::IChannelRxHandler *_RxHandler;
 	pthread_t   _RecvThread;
 	bool _ThreadStarted;

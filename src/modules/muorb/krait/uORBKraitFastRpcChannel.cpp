@@ -40,7 +40,7 @@
 
 #define LOG_TAG "uORBKraitFastRpcChannel.cpp"
 
-uORB::KraitFastRpcChannel *uORB::KraitFastRpcChannel::_InstancePtr = NULL;
+uORB::KraitFastRpcChannel uORB::KraitFastRpcChannel::_Instance;
 
 static void DumpData(uint8_t *buffer, int32_t length, int32_t num_topics);
 
