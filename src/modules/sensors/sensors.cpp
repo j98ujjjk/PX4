@@ -1155,6 +1155,14 @@ Sensors::gyro_poll(struct sensor_combined_s &raw)
 void
 Sensors::mag_poll(struct sensor_combined_s &raw)
 {
+	raw.magnetometer_ga[0] = 0.2f;
+	raw.magnetometer_ga[1] = 0.0f;
+	raw.magnetometer_ga[2] = 0.4f;
+	raw.magnetometer_timestamp[0] = hrt_absolute_time();
+	raw.magnetometer_timestamp[1] = hrt_absolute_time();
+	raw.magnetometer_timestamp[2] = hrt_absolute_time();
+
+#if 0
 	for (unsigned i = 0; i < _mag_count; i++) {
 		bool mag_updated;
 		orb_check(_mag_sub[i], &mag_updated);
@@ -1181,6 +1189,7 @@ Sensors::mag_poll(struct sensor_combined_s &raw)
 			raw.magnetometer_temp[i] = mag_report.temperature;
 		}
 	}
+#endif
 }
 
 void
