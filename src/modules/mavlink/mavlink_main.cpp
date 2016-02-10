@@ -1054,7 +1054,7 @@ Mavlink::init_udp()
 	memset((char *)&_src_addr, 0, sizeof(_src_addr));
 	if (_mode != MAVLINK_MODE_ONBOARD) {
 		_src_addr.sin_family = AF_INET;
-		inet_aton("127.0.0.1", &_src_addr.sin_addr);
+		inet_aton("192.168.1.19", &_src_addr.sin_addr);
 		_src_addr.sin_port = htons(_remote_port);
 		set_client_source_initialized();
 	}
