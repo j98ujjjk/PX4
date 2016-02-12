@@ -204,6 +204,7 @@ int DfMpu9250Wrapper::_publish(struct imu_sensor_data &data)
 		if (_accel_topic != nullptr) {
 			orb_publish(ORB_ID(sensor_accel), _accel_topic, &accel_report);
 		}
+
 	}
 
 	perf_end(_accel_sample_perf);
