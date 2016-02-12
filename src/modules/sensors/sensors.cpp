@@ -2233,6 +2233,23 @@ Sensors::task_main()
 
 		diff_pres_poll(raw);
 
+#if 1
+		static hrt_abstime last_time = 0;
+		static unsigned counter = 0;
+
+		hrt_abstime now = hrt_absolute_time();
+
+		// 4000 at 250Hz
+		hrt_abstime diff = now - last_time;
+		if (diff > 5000) {
+			PX4_WARN("timeout: %llu", diff);
+		}
+		if (counter++ % 100 == 0) {
+			PX4_WARN("rate: %llu", diff);
+		}
+		last_time = now;
+#endif
+
 		/* Inform other processes that new data is available to copy */
 		if (_publishing && raw.timestamp > 0) {
 			orb_publish(ORB_ID(sensor_combined), _sensor_pub, &raw);

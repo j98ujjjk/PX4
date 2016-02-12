@@ -343,6 +343,22 @@ void AttitudeEstimatorQ::task_main()
 			continue;
 		}
 
+#if 1
+		static hrt_abstime last_time_debug = 0;
+		static unsigned counter = 0;
+		hrt_abstime now_time = hrt_absolute_time();
+
+		// 4000 at 250Hz
+		hrt_abstime diff = now_time - last_time_debug;
+		if (diff > 5000) {
+			PX4_INFO("timeout: %llu", diff);
+		}
+		if (counter++ % 100 == 0) {
+			PX4_INFO("rate: %llu", diff);
+		}
+		last_time_debug = now_time;
+#endif
+
 		update_parameters(false);
 
 		// Update sensors
@@ -394,6 +410,7 @@ void AttitudeEstimatorQ::task_main()
 			_accel.set(_voter_accel.get_best(curr_time, &best_accel));
 			_mag.set(_voter_mag.get_best(curr_time, &best_mag));
 
+#if 0
 			if (_accel.length() < 0.01f) {
 				warnx("WARNING: degenerate accel!");
 				continue;
@@ -402,6 +419,7 @@ void AttitudeEstimatorQ::task_main()
 				warnx("WARNING: degenerate mag!");
 				continue;
 			}
+#endif
 
 			_data_good = true;
 
