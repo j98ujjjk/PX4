@@ -102,9 +102,6 @@ static void *map_memory(off_t target)
 
 int get_shmem_lock(const char *caller_file_name, int caller_line_number)
 {
-	// TODO FIXME: just say this went through
-	return 0;
-
 	int i = 0;
 	/* TODO: make this comment so somebody can understand it: ioctl calls cmpxchg */
 	while (ioctl(mem_fd, LOCK_MEM) != 0) {
@@ -126,9 +123,6 @@ int get_shmem_lock(const char *caller_file_name, int caller_line_number)
 
 void release_shmem_lock(void)
 {
-	// TODO FIXME: just say this went through
-	return;
-
 	int ret = ioctl(mem_fd, UNLOCK_MEM);
 	if (ret != 0) {
 		PX4_INFO("unlock failed, ret: %d, errno %d", ret, errno);
