@@ -94,7 +94,7 @@ static void *map_memory(off_t target)
 		exit(1);
 	}
 
-	PX4_DEBUG("Initializing map memory: mem_fd: %d, 0x%X", mem_fd, map_base + (target & MAP_MASK) + LOCK_SIZE);
+	PX4_INFO("Initializing map memory: mem_fd: %d, 0x%X", mem_fd, map_base + (target & MAP_MASK) + LOCK_SIZE);
 
 	return (map_base + (target & MAP_MASK) + LOCK_SIZE);
 
@@ -102,8 +102,10 @@ static void *map_memory(off_t target)
 
 int get_shmem_lock(const char *caller_file_name, int caller_line_number)
 {
-	int i = 0;
+	// TODO FIXME: just say this went through
+	return 0;
 
+	int i = 0;
 	/* TODO: make this comment so somebody can understand it: ioctl calls cmpxchg */
 	while (ioctl(mem_fd, LOCK_MEM) != 0) {
 
@@ -117,12 +119,16 @@ int get_shmem_lock(const char *caller_file_name, int caller_line_number)
 		}
 	}
 
-	PX4_INFO("got a lock!");
+	PX4_INFO("got the lock");
+
 	return 0; //got the lock
 }
 
 void release_shmem_lock(void)
 {
+	// TODO FIXME: just say this went through
+	return;
+
 	int ret = ioctl(mem_fd, UNLOCK_MEM);
 	if (ret != 0) {
 		PX4_INFO("unlock failed, ret: %d, errno %d", ret, errno);
@@ -138,8 +144,6 @@ void init_shared_memory(void)
 	shmem_info_p = (struct shmem_info *) virt_addr;
 
 	PX4_DEBUG("linux memory mapped");
-
-	release_shmem_lock();
 }
 
 void copy_params_to_shmem(struct param_info_s *param_info_base)

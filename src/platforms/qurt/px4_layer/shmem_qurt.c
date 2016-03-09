@@ -76,6 +76,10 @@ static void *map_memory(off_t target)
 
 int get_shmem_lock(const char *caller_file_name, int caller_line_number)
 {
+	// TODO: don't do this for now
+	PX4_INFO("locking");
+	return 0;
+
 	unsigned char *lock = (unsigned char *)(MAP_ADDRESS + LOCK_OFFSET);
 	unsigned int i = 0;
 
@@ -95,12 +99,21 @@ int get_shmem_lock(const char *caller_file_name, int caller_line_number)
 		PX4_DEBUG("Lock acquired, file name: %s, line number: %d\n", caller_file_name, caller_line_number);
 	}
 
+	while (true) {
+		PX4_INFO("we did get a lock");
+		usleep(1000000);
+	}
+
 	return 0; //got the lock
 
 }
 
 void release_shmem_lock(void)
 {
+	// TODO: don't do this either
+	PX4_INFO("unlocking");
+	return;
+
 	unsigned char *lock = (unsigned char *)(MAP_ADDRESS + LOCK_OFFSET);
 
 	*lock = 1;
