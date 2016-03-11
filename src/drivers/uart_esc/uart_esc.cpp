@@ -391,9 +391,8 @@ void task_main(int argc, char *argv[])
 						    PX4_ISFINITE(_outputs.output[i]) &&
 						    _outputs.output[i] >= -1.0f &&
 						    _outputs.output[i] <= 1.0f) {
-							// scale for PWM output 1000 - 2000us
-							_outputs.output[i] = 1500 + (500 * _outputs.output[i]);
-
+							// scale for PWM output 1100 - 2100us
+							_outputs.output[i] = 1700 + (500 * _outputs.output[i]);
 						} else {
 							//
 							// Value is NaN, INF or out of band - set to the minimum value.
