@@ -71,10 +71,11 @@ static const uint16_t	r_page_config[] = {
 	[PX4IO_P_CONFIG_BOOTLOADER_VERSION]	= 3,	/* XXX hardcoded magic number */
 	[PX4IO_P_CONFIG_MAX_TRANSFER]		= 64,	/* XXX hardcoded magic number */
 	[PX4IO_P_CONFIG_CONTROL_COUNT]		= PX4IO_CONTROL_CHANNELS,
-	[PX4IO_P_CONFIG_ACTUATOR_COUNT]		= PX4IO_SERVO_COUNT,
+	[PX4IO_P_CONFIG_ACTUATOR_COUNT]		= PX4IO_ACTUATOR_COUNT,
 	[PX4IO_P_CONFIG_RC_INPUT_COUNT]		= PX4IO_RC_INPUT_CHANNELS,
 	[PX4IO_P_CONFIG_ADC_INPUT_COUNT]	= PX4IO_ADC_CHANNEL_COUNT,
 	[PX4IO_P_CONFIG_RELAY_COUNT]		= PX4IO_RELAY_CHANNELS,
+	[PX4IO_P_CONFIG_SERVO_COUNT]		= PX4IO_SERVO_COUNT,
 };
 
 /**
@@ -100,14 +101,14 @@ uint16_t		r_page_status[] = {
  *
  * Post-mixed actuator values.
  */
-uint16_t 		r_page_actuators[PX4IO_SERVO_COUNT];
+uint16_t 		r_page_actuators[PX4IO_ACTUATOR_COUNT];
 
 /**
  * PAGE 3
  *
  * Servo PWM values
  */
-uint16_t		r_page_servos[PX4IO_SERVO_COUNT];
+uint16_t		r_page_servos[PX4IO_ACTUATOR_COUNT];
 
 /**
  * PAGE 4
@@ -234,7 +235,8 @@ uint16_t		r_page_rc_input_config[PX4IO_RC_INPUT_CHANNELS * PX4IO_P_RC_CONFIG_STR
  *
  * Disable pulses as default.
  */
-uint16_t		r_page_servo_failsafe[PX4IO_SERVO_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+uint16_t		r_page_servo_failsafe[PX4IO_ACTUATOR_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0,
+									0, 0, 0, 0, 0, 0, 0, 0 };
 
 /**
  * PAGE 106
@@ -242,7 +244,12 @@ uint16_t		r_page_servo_failsafe[PX4IO_SERVO_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0 };
  * minimum PWM values when armed
  *
  */
-uint16_t		r_page_servo_control_min[PX4IO_SERVO_COUNT] = { PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN };
+uint16_t		r_page_servo_control_min[PX4IO_ACTUATOR_COUNT] = {
+	PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN,
+	PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN,
+	PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN,
+	PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN, PWM_DEFAULT_MIN
+};
 
 /**
  * PAGE 107
@@ -250,7 +257,11 @@ uint16_t		r_page_servo_control_min[PX4IO_SERVO_COUNT] = { PWM_DEFAULT_MIN, PWM_D
  * maximum PWM values when armed
  *
  */
-uint16_t		r_page_servo_control_max[PX4IO_SERVO_COUNT] = { PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX };
+uint16_t		r_page_servo_control_max[PX4IO_ACTUATOR_COUNT] = {
+	PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX,
+	PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX,
+	PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX,
+	PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX, PWM_DEFAULT_MAX };
 
 /**
  * PAGE 108
@@ -258,7 +269,8 @@ uint16_t		r_page_servo_control_max[PX4IO_SERVO_COUNT] = { PWM_DEFAULT_MAX, PWM_D
  * disarmed PWM values for difficult ESCs
  *
  */
-uint16_t		r_page_servo_disarmed[PX4IO_SERVO_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+uint16_t		r_page_servo_disarmed[PX4IO_ACTUATOR_COUNT] = { 0, 0, 0, 0, 0, 0, 0, 0,
+									0, 0, 0, 0, 0, 0, 0, 0 };
 
 int
 registers_set(uint8_t page, uint8_t offset, const uint16_t *values, unsigned num_values)
@@ -290,7 +302,7 @@ registers_set(uint8_t page, uint8_t offset, const uint16_t *values, unsigned num
 	case PX4IO_PAGE_DIRECT_PWM:
 
 		/* copy channel data */
-		while ((offset < PX4IO_CONTROL_CHANNELS) && (num_values > 0)) {
+		while ((offset < PX4IO_ACTUATOR_COUNT) && (num_values > 0)) {
 
 			/* XXX range-check value? */
 			if (*values != PWM_IGNORE_THIS_CHANNEL) {
@@ -311,7 +323,7 @@ registers_set(uint8_t page, uint8_t offset, const uint16_t *values, unsigned num
 	case PX4IO_PAGE_FAILSAFE_PWM:
 
 		/* copy channel data */
-		while ((offset < PX4IO_SERVO_COUNT) && (num_values > 0)) {
+		while ((offset < PX4IO_ACTUATOR_COUNT) && (num_values > 0)) {
 
 			if (*values == 0) {
 				/* ignore 0 */
@@ -338,7 +350,7 @@ registers_set(uint8_t page, uint8_t offset, const uint16_t *values, unsigned num
 	case PX4IO_PAGE_CONTROL_MIN_PWM:
 
 		/* copy channel data */
-		while ((offset < PX4IO_SERVO_COUNT) && (num_values > 0)) {
+		while ((offset < PX4IO_ACTUATOR_COUNT) && (num_values > 0)) {
 
 			if (*values == 0) {
 				/* ignore 0 */
@@ -362,7 +374,7 @@ registers_set(uint8_t page, uint8_t offset, const uint16_t *values, unsigned num
 	case PX4IO_PAGE_CONTROL_MAX_PWM:
 
 		/* copy channel data */
-		while ((offset < PX4IO_SERVO_COUNT) && (num_values > 0)) {
+		while ((offset < PX4IO_ACTUATOR_COUNT) && (num_values > 0)) {
 
 			if (*values == 0) {
 				/* ignore 0 */
@@ -388,7 +400,7 @@ registers_set(uint8_t page, uint8_t offset, const uint16_t *values, unsigned num
 			bool all_disarmed_off = true;
 
 			/* copy channel data */
-			while ((offset < PX4IO_SERVO_COUNT) && (num_values > 0)) {
+			while ((offset < PX4IO_ACTUATOR_COUNT) && (num_values > 0)) {
 
 				if (*values == 0) {
 					/* 0 means disabling always PWM */
