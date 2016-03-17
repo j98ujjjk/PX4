@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2013 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2014 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,23 +32,41 @@
  ****************************************************************************/
 
 /**
- * @file rc_check.h
+ * @file mavlink_rate_limiter.cpp
+ * Message rate limiter implementation.
  *
- * RC calibration check
+ * @author Anton Babushkin <anton.babushkin@me.com>
  */
-#include <stdbool.h>
-#include <uORB/uORB.h>
 
-#pragma once
+#include "mavlink_rate_limiter.h"
 
-__BEGIN_DECLS
+MavlinkRateLimiter::MavlinkRateLimiter() : _last_sent(0), _interval(1000000)
+{
+}
 
-/**
- * Check the RC calibration
- *
- * @return			0 / OK if RC calibration is ok, index + 1 of the first
- *				channel that failed else (so 1 == first channel failed)
- */
-__EXPORT int	rc_calibration_check(orb_advert_t *mavlink_log_pub, bool report_fail);
+MavlinkRateLimiter::MavlinkRateLimiter(unsigned int interval) : _last_sent(0), _interval(interval)
+{
+}
 
-__END_DECLS
+MavlinkRateLimiter::~MavlinkRateLimiter()
+{
+}
+
+void
+MavlinkRateLimiter::set_interval(unsigned int interval)
+{
+	_interval = interval;
+}
+
+bool
+MavlinkRateLimiter::check(hrt_abstime t)
+{
+	uint64_t dt = t - _last_sent;
+
+	if (dt > 0 && dt >= _interval) {
+		_last_sent = t;
+		return true;
+	}
+
+	return false;
+}
