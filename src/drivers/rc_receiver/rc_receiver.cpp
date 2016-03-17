@@ -333,12 +333,10 @@ void task_main(int argc, char *argv[])
 					PX4_WARN("RC signal lost for %u ms", time_diff_us / 1000);
 					counter = 0;
 				}
-
-			} else {
-				continue;
 			}
 			// Don't keep the loop busy here but give some time the others.
 			usleep(10000);
+			continue;
 		}
 
 		if (new_rc_input) {
