@@ -366,6 +366,9 @@ void task_main(int argc, char *argv[])
 		}
 
 		orb_publish(ORB_ID(input_rc), _input_rc_pub, &_rc_in);
+
+		// TODO FIXME let's slow this down for now.
+		usleep(10000);
 	}
 
 	::close(serial_fd);
