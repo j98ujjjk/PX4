@@ -393,6 +393,7 @@ void task_main(int argc, char *argv[])
 						    _outputs.output[i] <= 1.0f) {
 							// scale for PWM output 1050 - 2000us
 							_outputs.output[i] = 1525 + (475 * _outputs.output[i]);
+
 						} else {
 							//
 							// Value is NaN, INF or out of band - set to the minimum value.
