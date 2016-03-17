@@ -337,6 +337,8 @@ void task_main(int argc, char *argv[])
 			} else {
 				continue;
 			}
+			// Don't keep the loop busy here but give some time the others.
+			usleep(10000);
 		}
 
 		if (new_rc_input) {
