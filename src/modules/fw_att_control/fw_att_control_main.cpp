@@ -609,7 +609,7 @@ FixedwingAttitudeControl::vehicle_setpoint_poll()
 	orb_check(_att_sp_sub, &att_sp_updated);
 
 	if (att_sp_updated) {
-		orb_copy(ORB_ID(vehicle_attitude_setpoint), _att_sp_sub, &_att_sp);
+		orb_copy(ORB_ID(fw_virtual_attitude_setpoint), _att_sp_sub, &_att_sp);
 		_setpoint_valid = true;
 	}
 }
@@ -664,7 +664,7 @@ FixedwingAttitudeControl::task_main()
 	/*
 	 * do subscriptions
 	 */
-	_att_sp_sub = orb_subscribe(ORB_ID(vehicle_attitude_setpoint));
+	_att_sp_sub = orb_subscribe(ORB_ID(fw_virtual_attitude_setpoint));
 	_ctrl_state_sub = orb_subscribe(ORB_ID(control_state));
 	_accel_sub = orb_subscribe_multi(ORB_ID(sensor_accel), 0);
 	_vcontrol_mode_sub = orb_subscribe(ORB_ID(vehicle_control_mode));

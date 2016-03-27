@@ -312,7 +312,10 @@ void Standard::fill_actuator_outputs()
 	_actuators_out_1->control[actuator_controls_s::INDEX_ROLL] = -_actuators_fw_in->control[actuator_controls_s::INDEX_ROLL]
 			* (1 - _mc_roll_weight);	//roll
 	_actuators_out_1->control[actuator_controls_s::INDEX_PITCH] =
-		(_actuators_fw_in->control[actuator_controls_s::INDEX_PITCH] + _params->fw_pitch_trim) * (1 - _mc_pitch_weight);	//pitch
+		(_actuators_fw_in->control[actuator_controls_s::INDEX_PITCH] + _params->fw_pitch_trim); // * (1 - _mc_pitch_weight);	//pitch
+
+	printf("pitch: %.4f \n", (double)_actuators_out_1->control[actuator_controls_s::INDEX_PITCH]);
+
 	_actuators_out_1->control[actuator_controls_s::INDEX_YAW] = _actuators_fw_in->control[actuator_controls_s::INDEX_YAW]
 			* (1 - _mc_yaw_weight);	// yaw
 
