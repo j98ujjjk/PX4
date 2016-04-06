@@ -141,6 +141,7 @@ private:
 	int 	_range_finder_sub = -1;
 
 	bool            _prev_motors_armed = false; // motors armed status from the previous frame
+	bool 			_is_rotary_wing = true;
 
 	orb_advert_t _att_pub;
 	orb_advert_t _lpos_pub;
@@ -443,8 +444,10 @@ void Ekf2::task_main()
 		}
 
 		// read airspeed data if available
-		if (airspeed_updated) {
-			_ekf->setAirspeedData(airspeed.timestamp, &airspeed.true_airspeed_m_s); // Only TAS is now fed into the estimator
+		if (airspeed_updated && !_is_rotary_wing) {
+			float eas2tas = airspeed.true_airspeed_m_s / airspeed.indicated_airspeed_m_s;
+			eas2tas = math::constrain(eas2tas, 0.9f, 10.0f);
+			_ekf->setAirspeedData(airspeed.timestamp, &airspeed.true_airspeed_m_s, &eas2tas);
 		}
 
 		if (optical_flow_updated) {
@@ -473,6 +476,9 @@ void Ekf2::task_main()
 			orb_copy(ORB_ID(vehicle_status), _vehicle_status_sub, &status);
 			_ekf->set_in_air_status(!status.condition_landed);
 			_ekf->set_arm_status(status.arming_state & vehicle_status_s::ARMING_STATE_ARMED);
+
+			// update airframe status
+			_is_rotary_wing = status.is_rotary_wing;
 		}
 
 		// run the EKF update and output
