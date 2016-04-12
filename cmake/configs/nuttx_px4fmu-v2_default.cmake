@@ -66,6 +66,7 @@ set(config_module_list
 	systemcmds/mtd
 	systemcmds/dumpfile
 	systemcmds/ver
+	systemcmds/motor_ramp
 
 	#
 	# General system control
