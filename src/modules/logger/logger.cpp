@@ -4,6 +4,7 @@
 #include <string.h>
 #include <uORB/uORBTopics.h>
 #include <px4_getopt.h>
+#include <malloc.h>
 
 #define DBGPRINT
 
@@ -371,7 +372,7 @@ void Logger::run()
 
 	// we start logging immediately
 	// the case where we wait with logging until vehicle is armed is handled below
-	if (_log_on_start) {
+	if (true) {
 		start_log();
 	}
 
@@ -450,7 +451,7 @@ void Logger::run()
 						}
 
 #endif
-
+						printf("writing\n");
 						if (_writer.write(buffer, msg_size)) {
 #ifdef DBGPRINT
 

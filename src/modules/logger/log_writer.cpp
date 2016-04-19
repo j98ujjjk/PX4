@@ -93,8 +93,11 @@ void LogWriter::run()
 		// Outer endless loop, start new file each time
 		// _filename must be set before setting _should_run = true
 
-
-		_fd = ::open(_filename, O_CREAT | O_WRONLY, PX4_O_MODE_666);
+		#ifdef __PX4_NUTTX
+			int _fd = open(_filename, O_CREAT | O_WRONLY | O_DSYNC);
+		#else
+			int _fd = open(_filename, O_CREAT | O_WRONLY | O_DSYNC, PX4_O_MODE_666);
+		#endif
 
 		if (_fd < 0) {
 			warn("can't open log file %s", _filename);

@@ -14,6 +14,12 @@ namespace px4
 namespace logger
 {
 
+#ifndef __PX4_POSIX_EAGLE
+#define MOUNTPOINT PX4_ROOTFSDIR"/fs/microsd"
+#else
+#define MOUNTPOINT "/root"
+#endif
+
 struct LoggerSubscription {
 	int fd[ORB_MULTI_MAX_INSTANCES];
 	const orb_metadata *metadata = nullptr;
@@ -68,7 +74,9 @@ private:
 	static constexpr size_t 	MAX_TOPICS_NUM = 128;
 	static constexpr unsigned	MAX_NO_LOGFOLDER = 999;	/**< Maximum number of log dirs */
 	static constexpr unsigned	MAX_NO_LOGFILE = 999;	/**< Maximum number of log files */
-	static constexpr const char 		*LOG_ROOT = PX4_ROOTFSDIR"/fs/microsd/log";
+	//static constexpr const char 		*LOG_ROOT = PX4_ROOTFSDIR"/fs/microsd/log";
+	static constexpr const char 		*LOG_ROOT = MOUNTPOINT "/log";
+
 
 	bool						_task_should_exit = true;
 	uint8_t 					*_log_buffer;
