@@ -210,6 +210,7 @@ private:
 	unsigned	_num_failsafe_set;
 	unsigned	_num_disarmed_set;
 	bool		_safety_off;
+	bool		_safety_disabled;
 	orb_advert_t		_to_safety;
 
 	static bool	arm_nothrottle() { return (_armed.prearmed && !_armed.armed); }
@@ -378,6 +379,7 @@ PX4FMU::PX4FMU() :
 	_num_failsafe_set(0),
 	_num_disarmed_set(0),
 	_safety_off(false),
+	_safety_disabled(false),
 	_to_safety(nullptr)
 {
 	for (unsigned i = 0; i < _max_actuators; i++) {
@@ -455,6 +457,8 @@ PX4FMU::init()
 	} else if (_class_instance < 0) {
 		warnx("FAILED registering class device");
 	}
+
+	_safety_disabled = circuit_breaker_enabled("CBRK_IO_SAFETY", CBRK_IO_SAFETY_KEY);
 
 	work_start();
 
@@ -1082,7 +1086,7 @@ PX4FMU::cycle()
 		 */
 		struct safety_s safety = {};
 
-		if (circuit_breaker_enabled("CBRK_IO_SAFETY", CBRK_IO_SAFETY_KEY)) {
+		if (_safety_disabled) {
 			/* safety switch disabled, turn LED on solid */
 			stm32_gpiowrite(GPIO_LED_SAFETY, 0);
 			_safety_off = true;
@@ -1255,7 +1259,7 @@ PX4FMU::cycle()
 
 				rc_updated = false;
 
-				for (unsigned i = 0; i < newBytes; i++) {
+				for (unsigned i = 0; i < (unsigned)newBytes; i++) {
 					/* set updated flag if one complete packet was parsed */
 					st24_rssi = RC_INPUT_RSSI_MAX;
 					rc_updated = (OK == st24_decode(_rcs_buf[i], &st24_rssi, &rx_count,
@@ -1294,7 +1298,7 @@ PX4FMU::cycle()
 
 				rc_updated = false;
 
-				for (unsigned i = 0; i < newBytes; i++) {
+				for (unsigned i = 0; i < (unsigned)newBytes; i++) {
 					/* set updated flag if one complete packet was parsed */
 					sumd_rssi = RC_INPUT_RSSI_MAX;
 					rc_updated = (OK == sumd_decode(_rcs_buf[i], &sumd_rssi, &rx_count,
@@ -1888,6 +1892,59 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 			default:
 				ret = -EINVAL;
 				break;
+			}
+
+			break;
+		}
+
+	case PWM_SERVO_SET_MODE: {
+			switch (arg) {
+			case PWM_SERVO_MODE_NONE:
+				ret = set_mode(MODE_NONE);
+				break;
+
+			case PWM_SERVO_MODE_2PWM:
+				ret = set_mode(MODE_2PWM);
+				break;
+
+			case PWM_SERVO_MODE_2PWM2CAP:
+				ret = set_mode(MODE_2PWM2CAP);
+				break;
+
+			case PWM_SERVO_MODE_3PWM:
+				ret = set_mode(MODE_3PWM);
+				break;
+
+			case PWM_SERVO_MODE_3PWM1CAP:
+				ret = set_mode(MODE_3PWM1CAP);
+				break;
+
+			case PWM_SERVO_MODE_4PWM:
+				ret = set_mode(MODE_4PWM);
+				break;
+
+			case PWM_SERVO_MODE_6PWM:
+				ret = set_mode(MODE_6PWM);
+				break;
+
+			case PWM_SERVO_MODE_8PWM:
+				ret = set_mode(MODE_8PWM);
+				break;
+
+			case PWM_SERVO_MODE_4CAP:
+				ret = set_mode(MODE_4CAP);
+				break;
+
+			case PWM_SERVO_MODE_5CAP:
+				ret = set_mode(MODE_5CAP);
+				break;
+
+			case PWM_SERVO_MODE_6CAP:
+				ret = set_mode(MODE_6CAP);
+				break;
+
+			default:
+				ret = -EINVAL;
 			}
 
 			break;

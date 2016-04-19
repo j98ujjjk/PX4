@@ -688,6 +688,12 @@ PX4IO::init()
 
 		DEVICE_LOG("config read error");
 		mavlink_log_emergency(&_mavlink_log_pub, "[IO] config read fail, abort.");
+
+		// ask IO to reboot into bootloader as the failure may
+		// be due to mismatched firmware versions and we want
+		// the startup script to be able to load a new IO
+		// firmware
+		io_reg_set(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_REBOOT_BL, PX4IO_REBOOT_BL_MAGIC);
 		return -1;
 	}
 
@@ -1068,11 +1074,13 @@ PX4IO::task_main()
 					param_set(dsm_bind_param, &dsm_bind_val);
 				}
 
-				/* re-upload RC input config as it may have changed */
-				io_set_rc_config();
+				if (!_rc_handling_disabled) {
+					/* re-upload RC input config as it may have changed */
+					io_set_rc_config();
+				}
 
 				/* re-set the battery scaling */
-				int32_t voltage_scaling_val;
+				int32_t voltage_scaling_val = 10000;
 				param_t voltage_scaling_param;
 
 				/* set battery voltage scaling */
@@ -2329,10 +2337,11 @@ PX4IO::print_status(bool extended_status)
 	       io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_RELAYS));
 #endif
 #ifdef CONFIG_ARCH_BOARD_PX4FMU_V2
-	printf("rates 0x%04x default %u alt %u\n",
+	printf("rates 0x%04x default %u alt %u sbus %u\n",
 	       io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_PWM_RATES),
 	       io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_PWM_DEFAULTRATE),
-	       io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_PWM_ALTRATE));
+	       io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_PWM_ALTRATE),
+	       io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_SBUS_RATE));
 #endif
 	printf("debuglevel %u\n", io_reg_get(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_SET_DEBUG));
 
@@ -2604,6 +2613,11 @@ PX4IO::ioctl(file *filep, int cmd, unsigned long arg)
 			ret = io_reg_modify(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_ARMING, 0, PX4IO_P_SETUP_ARMING_OVERRIDE_IMMEDIATE);
 		}
 
+		break;
+
+	case PWM_SERVO_SET_SBUS_RATE:
+		/* set the requested SBUS frame rate */
+		ret = io_reg_set(PX4IO_PAGE_SETUP, PX4IO_P_SETUP_SBUS_RATE, arg);
 		break;
 
 	case DSM_BIND_START:

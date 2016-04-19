@@ -1,16 +1,23 @@
 include(qurt/px4_impl_qurt)
 
-if ("$ENV{HEXAGON_SDK_ROOT}" STREQUAL "")
-	message(FATAL_ERROR "Enviroment variable HEXAGON_SDK_ROOT must be set")
-else()
-	set(HEXAGON_SDK_ROOT $ENV{HEXAGON_SDK_ROOT})
-endif()
+#if ("${HEXAGON_DRIVERS_ROOT}" #STREQUAL "")
+#	message(FATAL_ERROR "HEXAGON_DRIVERS_ROOT is not set")
+#endif()
+
+#if ("${EAGLE_DRIVERS_SRC}" STREQUAL "")
+#	message(FATAL_ERROR "EAGLE_DRIVERS_SRC is not set")
+#endif()
+
+#include_directories(${HEXAGON_DRIVERS_ROOT}/inc)
+
+add_definitions(
+   -D__USING_SNAPDRAGON_LEGACY_DRIVER
+   )
 
 set(CONFIG_SHMEM "1")
 
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/cmake/cmake_hexagon/toolchain/Toolchain-qurt.cmake)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/cmake_hexagon")
+include(${CMAKE_SOURCE_DIR}/cmake/cmake_hexagon/qurt_app.cmake)
 
 set(config_module_list
 	#
@@ -21,7 +28,6 @@ set(config_module_list
 	platforms/posix/drivers/df_mpu9250_wrapper
 	platforms/posix/drivers/df_bmp280_wrapper
 	platforms/posix/drivers/df_hmc5883_wrapper
-	platforms/posix/drivers/df_trone_wrapper
 
 	#
 	# System commands
@@ -51,6 +57,7 @@ set(config_module_list
 	modules/systemlib/mixer
 	modules/uORB
 	modules/commander
+	modules/controllib
 	modules/land_detector
 
 	#
@@ -63,7 +70,6 @@ set(config_module_list
 	#
 	# Libraries
 	#
-	lib/controllib
 	lib/mathlib
 	lib/mathlib/math/filter
 	lib/geo
@@ -91,5 +97,4 @@ set(config_df_driver_list
 	mpu9250
 	bmp280
 	hmc5883
-	trone
 	)

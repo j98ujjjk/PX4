@@ -902,12 +902,12 @@ bool handle_command(struct vehicle_status_s *status_local, const struct safety_s
 				} else if ((int)cmd->param2 == 3) {
 					/* trigger gps loss mode */
 					status_flags.gps_failure_cmd = true;
-					warnx("gps loss mode commanded");
+					warnx("GPS loss mode commanded");
 
 				} else if ((int)cmd->param2 == 4) {
 					/* trigger rc loss mode */
 					status_flags.rc_signal_lost_cmd = true;
-					warnx("rc loss mode commanded");
+					warnx("RC loss mode commanded");
 
 				} else if ((int)cmd->param2 == 5) {
 					/* trigger vtol transition failure mode */
@@ -1115,6 +1115,7 @@ int commander_thread_main(int argc, char *argv[])
 	bool sensor_fail_tune_played = false;
 	bool arm_tune_played = false;
 	bool was_landed = true;
+	bool was_falling = false;
 	bool was_armed = false;
 
 	bool startup_in_hil = false;
@@ -1128,10 +1129,10 @@ int commander_thread_main(int argc, char *argv[])
 #endif
 
 	if (argc > 2) {
-		if (!strcmp(argv[2],"-hil")) {
+		if (!strcmp(argv[3],"-hil")) {
 			startup_in_hil = true;
 		} else {
-			PX4_ERR("Argument %s not supported.", argv[2]);
+			PX4_ERR("Argument %s not supported.", argv[3]);
 			PX4_ERR("COMMANDER NOT STARTED");
 			thread_should_exit = true;
 		}
@@ -1914,10 +1915,11 @@ int commander_thread_main(int argc, char *argv[])
 		}
 
 		if ((updated && status_flags.condition_local_altitude_valid) || check_for_disarming) {
-			if (was_landed != land_detector.landed) {
-				if (land_detector.landed) {
+			if ((was_landed != land_detector.landed) || (was_falling != land_detector.freefall)) {
+				if (land_detector.freefall) {
+					mavlink_and_console_log_info(&mavlink_log_pub, "FREEFALL DETECTED");
+				} else if (land_detector.landed) {
 					mavlink_and_console_log_info(&mavlink_log_pub, "LANDING DETECTED");
-
 				} else {
 					mavlink_and_console_log_info(&mavlink_log_pub, "TAKEOFF DETECTED");
 				}
@@ -2102,13 +2104,13 @@ int commander_thread_main(int argc, char *argv[])
 				if (status_flags.gps_failure && !gpsIsNoisy) {
 					status_flags.gps_failure = false;
 					status_changed = true;
-					mavlink_log_critical(&mavlink_log_pub, "gps fix regained");
+					mavlink_log_critical(&mavlink_log_pub, "GPS fix regained");
 				}
 
 			} else if (!status_flags.gps_failure) {
 				status_flags.gps_failure = true;
 				status_changed = true;
-				mavlink_log_critical(&mavlink_log_pub, "gps fix lost");
+				mavlink_log_critical(&mavlink_log_pub, "GPS fix lost");
 			}
 		}
 
@@ -2569,8 +2571,7 @@ int commander_thread_main(int argc, char *argv[])
 				static bool flight_termination_printed = false;
 
 				if (!flight_termination_printed) {
-					warnx("Flight termination because of data link loss && gps failure");
-					mavlink_log_critical(&mavlink_log_pub, "DL and GPS lost: flight termination");
+					mavlink_and_console_log_critical(&mavlink_log_pub, "DL and GPS lost: flight termination");
 					flight_termination_printed = true;
 				}
 
@@ -2595,7 +2596,7 @@ int commander_thread_main(int argc, char *argv[])
 				static bool flight_termination_printed = false;
 
 				if (!flight_termination_printed) {
-					warnx("Flight termination because of RC signal loss && gps failure");
+					warnx("Flight termination because of RC signal loss and GPS failure");
 					flight_termination_printed = true;
 				}
 
@@ -2620,6 +2621,7 @@ int commander_thread_main(int argc, char *argv[])
 		}
 
 		was_landed = land_detector.landed;
+		was_falling = land_detector.freefall;
 		was_armed = armed.armed;
 
 		/* print new state */
@@ -2985,71 +2987,69 @@ set_main_state_rc(struct vehicle_status_s *status_local, struct manual_control_s
 			res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
 
 			/* enable the use of break */
-			do {
-				/* fallback strategies, give the user the closest mode to what he wanted */
-				if (res == TRANSITION_DENIED) {
+			/* fallback strategies, give the user the closest mode to what he wanted */
+			while (res == TRANSITION_DENIED) {
 
-					if (new_mode == commander_state_s::MAIN_STATE_AUTO_MISSION) {
-						res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
+				if (new_mode == commander_state_s::MAIN_STATE_AUTO_MISSION) {
 
-						if (res != TRANSITION_DENIED) {
-							break;
-						} else {
-							/* fall back to loiter */
-							new_mode = commander_state_s::MAIN_STATE_AUTO_LOITER;
-							print_reject_mode(status_local, "AUTO MISSION");
-						}
-					}
+					/* fall back to loiter */
+					new_mode = commander_state_s::MAIN_STATE_AUTO_LOITER;
+					print_reject_mode(status_local, "AUTO MISSION");
+					res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
 
-					if (new_mode == commander_state_s::MAIN_STATE_AUTO_LOITER) {
-						res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
-
-						if (res != TRANSITION_DENIED) {
-							break;
-						} else {
-							/* fall back to position control */
-							new_mode = commander_state_s::MAIN_STATE_POSCTL;
-							print_reject_mode(status_local, "AUTO PAUSE");
-						}
-					}
-
-					if (new_mode == commander_state_s::MAIN_STATE_POSCTL) {
-						res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
-
-						if (res != TRANSITION_DENIED) {
-							break;
-						} else {
-							/* fall back to altitude control */
-							new_mode = commander_state_s::MAIN_STATE_ALTCTL;
-							print_reject_mode(status_local, "POSITION CONTROL");
-						}
-					}
-
-					if (new_mode == commander_state_s::MAIN_STATE_ALTCTL) {
-						res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
-
-						if (res != TRANSITION_DENIED) {
-							break;
-						} else {
-							/* fall back to stabilized */
-							new_mode = commander_state_s::MAIN_STATE_STAB;
-							print_reject_mode(status_local, "ALTITUDE CONTROL");
-						}
-					}
-
-					if (new_mode == commander_state_s::MAIN_STATE_STAB) {
-						res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
-
-						if (res != TRANSITION_DENIED) {
-							break;
-						} else {
-							/* there is no decent fallback any more, stay in mode and emit a warning */
-							print_reject_mode(status_local, "STABILIZED");
-						}
+					if (res != TRANSITION_DENIED) {
+						break;
 					}
 				}
-			} while (0);
 
+				if (new_mode == commander_state_s::MAIN_STATE_AUTO_LOITER) {
+
+					/* fall back to position control */
+					new_mode = commander_state_s::MAIN_STATE_POSCTL;
+					print_reject_mode(status_local, "AUTO PAUSE");
+					res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
+
+					if (res != TRANSITION_DENIED) {
+						break;
+					}
+				}
+
+				if (new_mode == commander_state_s::MAIN_STATE_POSCTL) {
+
+					/* fall back to altitude control */
+					new_mode = commander_state_s::MAIN_STATE_ALTCTL;
+					print_reject_mode(status_local, "POSITION CONTROL");
+					res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
+
+					if (res != TRANSITION_DENIED) {
+						break;
+					}
+				}
+
+				if (new_mode == commander_state_s::MAIN_STATE_ALTCTL) {
+
+					/* fall back to stabilized */
+					new_mode = commander_state_s::MAIN_STATE_STAB;
+					print_reject_mode(status_local, "ALTITUDE CONTROL");
+					res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
+
+					if (res != TRANSITION_DENIED) {
+						break;
+					}
+				}
+
+				if (new_mode == commander_state_s::MAIN_STATE_STAB) {
+
+					/* fall back to manual */
+					new_mode = commander_state_s::MAIN_STATE_MANUAL;
+					print_reject_mode(status_local, "STABILIZED");
+					res = main_state_transition(status_local, new_mode, main_state_prev, &status_flags, &internal_state);
+
+					if (res != TRANSITION_DENIED) {
+						break;
+					}
+				}
+			}
 		}
 
 		return res;

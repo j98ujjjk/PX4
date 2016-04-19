@@ -1,8 +1,7 @@
 include(posix/px4_impl_posix)
 
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/cmake/toolchains/Toolchain-arm-linux-gnueabihf.cmake)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/cmake_hexagon")
+include(${CMAKE_SOURCE_DIR}/cmake/cmake_hexagon/qurt_app.cmake)
 
 set(CONFIG_SHMEM "1")
 
@@ -10,6 +9,7 @@ set(CONFIG_SHMEM "1")
 # or if it is for the Snapdragon.
 add_definitions(
 	-D__PX4_POSIX_EAGLE
+	-D__USING_SNAPDRAGON_LEGACY_DRIVER
 	)
 
 set(config_module_list
@@ -41,11 +41,11 @@ set(config_module_list
 	modules/muorb/krait
 	modules/sensors
 	modules/dataman
-	modules/logger
+	modules/sdlog2
 	modules/simulator
 	modules/commander
+	modules/controllib
 
-	lib/controllib
 	lib/mathlib
 	lib/mathlib/math/filter
 	lib/conversion

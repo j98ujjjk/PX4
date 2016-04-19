@@ -4,7 +4,11 @@ set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/cmake/toolchains/Toolchain-arm-linu
 
 set(CONFIG_SHMEM "1")
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/cmake_hexagon")
+include(${CMAKE_SOURCE_DIR}/cmake/cmake_hexagon/qurt_app.cmake)
+
+add_definitions(
+   -D__USING_SNAPDRAGON_LEGACY_DRIVER
+   )
 
 set(config_module_list
 	drivers/device
@@ -20,7 +24,7 @@ set(config_module_list
 	modules/systemlib
 	modules/uORB
 	modules/dataman
-	modules/logger
+	modules/sdlog2
 	modules/simulator
 	modules/commander
 
