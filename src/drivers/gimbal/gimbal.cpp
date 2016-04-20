@@ -355,19 +355,21 @@ Gimbal::cycle()
 	struct vehicle_attitude_s att;
 
 	orb_copy(ORB_ID(vehicle_attitude), _att_sub, &att);
+	matrix::Quaternion<float> q(&att.q[0]);
+	matrix::Euler<float> euler(q);
 
 	if (_attitude_compensation_roll) {
-		roll = 1.0f / M_PI_F * -att.roll;
+		roll = 1.0f / M_PI_F * -euler(0);
 		updated = true;
 	}
 
 	if (_attitude_compensation_pitch) {
-		pitch = 1.0f / M_PI_F * -att.pitch;
+		pitch = 1.0f / M_PI_F * -euler(1);
 		updated = true;
 	}
 
 	if (_attitude_compensation_yaw) {
-		yaw = 1.0f / M_PI_F * att.yaw;
+		yaw = 1.0f / M_PI_F * euler(2);
 		updated = true;
 	}
 

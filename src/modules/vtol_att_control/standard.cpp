@@ -300,29 +300,37 @@ void Standard::update_mc_state()
 
 	// get projection of thrust vector on body x axis. This is used to
 	// determine the desired forward acceleration which we want to achieve with the pusher
-	math::Matrix<3,3> R(&_v_att->R[0]);
-	math::Matrix<3,3> R_sp(&_v_att_sp->R_body[0]);
-	math::Vector<3> thrust_sp_axis(-R_sp(0,2), -R_sp(1,2), -R_sp(2,2));
-	math::Vector<3> euler = R.to_euler();
-	R.from_euler(0, 0, euler(2));
-	math::Vector<3> body_x_zero_tilt(R(0,0), R(1,0), R(2,0));
+	//math::Matrix<3,3> R(&_v_att->R[0]);
+	matrix::Quaternion<float> q(&_v_att->q[0]);
+	matrix::Euler<float> euler(q);
+	euler(0) = euler(1) = 0.0f;
+	matrix::Dcm<float> R_sp(&_v_att_sp->R_body[0]);
+	matrix::Vector<float,3> thrust_sp_axis;
+	thrust_sp_axis(0) = -R_sp(0,2);
+	thrust_sp_axis(1) = -R_sp(1,2);
+	thrust_sp_axis(2) = -R_sp(2,2);
+
+	matrix::Dcm<float> R(euler);
+	matrix::Vector<float,3> body_x_zero_tilt;
+	body_x_zero_tilt(0) = R(0,0);
+	body_x_zero_tilt(1) = R(1,0);
+	body_x_zero_tilt(2) = R(2,0);
 
 	// we are using a parameter to scale the thrust value in order to compensate for highly over/under-powered motors
-	_pusher_throttle = body_x_zero_tilt * thrust_sp_axis * _v_att_sp->thrust * _params_standard.forward_thurst_scale;
+	_pusher_throttle = body_x_zero_tilt.dot(thrust_sp_axis) * _v_att_sp->thrust * _params_standard.forward_thurst_scale;
 	_pusher_throttle = _pusher_throttle < 0.0f ? 0.0f : _pusher_throttle;
 
 	float pitch_sp_corrected = _v_att_sp->pitch_body < -_params_standard.down_pitch_max ? -_params_standard.down_pitch_max : _v_att_sp->pitch_body;
 
 	// compute new desired rotation matrix with corrected pitch angle
 	// and copy data to attitude setpoint topic
-	euler = R_sp.to_euler();
-	euler(1) = pitch_sp_corrected;
-	R_sp.from_euler(euler(0), euler(1), euler(2));
-	memcpy(&_v_att_sp->R_body[0], R_sp.data, sizeof(_v_att_sp->R_body));
+	matrix::Euler<float> euler_sp(R_sp);
+	euler_sp(1) = pitch_sp_corrected;
+	matrix::Dcm<float> Rot_sp(euler_sp);
+	memcpy(&_v_att_sp->R_body[0], Rot_sp._data, sizeof(_v_att_sp->R_body));
 	_v_att_sp->pitch_body = pitch_sp_corrected;
-	math::Quaternion q_sp;
-	q_sp.from_dcm(R_sp);
-	memcpy(&_v_att_sp->q_d[0], &q_sp.data[0], sizeof(_v_att_sp->q_d));
+	matrix::Quaternion<float> q_sp(Rot_sp);
+	memcpy(&_v_att_sp->q_d[0], &q_sp._data[0], sizeof(_v_att_sp->q_d));
 }
 
 void Standard::update_fw_state()

@@ -66,6 +66,7 @@
 #include <math.h>
 #include <poll.h>
 #include <float.h>
+#include <matrix/math.hpp>
 
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
@@ -1090,7 +1091,9 @@ static void commander_set_home_position(orb_advert_t &homePub, home_position_s &
 	home.y = localPosition.y;
 	home.z = localPosition.z;
 
-	home.yaw = attitude.yaw;
+	matrix::Quaternion<float> q(&attitude.q[0]);
+	matrix::Euler<float> euler(q);
+	home.yaw = euler(2);
 
 	PX4_INFO("home: %.7f, %.7f, %.2f", home.lat, home.lon, (double)home.alt);
 
