@@ -33,7 +33,7 @@ set(config_module_list
 	modules/sensors
 	modules/simulator
 	modules/mavlink
-	modules/attitude_estimator_ekf
+	#modules/attitude_estimator_ekf
 	modules/attitude_estimator_q
 	modules/ekf2
 	modules/ekf_att_pos_estimator
