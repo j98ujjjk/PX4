@@ -183,5 +183,5 @@ const char *__orb_@(topic_name)_fields = "@( topic_name.upper() ):@( ";".join(to
 
 @[for multi_topic in topics]@
 ORB_DEFINE(@multi_topic, struct @uorb_struct, @(struct_size-padding_end_size),
-    __orb_@(topic_name)_fields);
+    @struct_size, __orb_@(topic_name)_fields);
 @[end for]

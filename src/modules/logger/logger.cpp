@@ -333,6 +333,10 @@ int Logger::add_topic(const char *name, unsigned interval = 0)
 	int fd = -1;
 
 	for (size_t i = 0; i < orb_topics_count(); i++) {
+		if (topics[i]->o_size != topics[i]->o_size_calc) {
+			PX4_ERR("#########################################     wrong topic size! %s (%zu %zu)", topics[i]->o_name,
+					topics[i]->o_size, topics[i]->o_size_calc);
+		}
 		if (strcmp(name, topics[i]->o_name) == 0) {
 			fd = add_topic(topics[i]);
 			PX4_INFO("logging topic: %zu, %s", i, topics[i]->o_name);
