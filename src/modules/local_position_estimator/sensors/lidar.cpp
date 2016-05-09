@@ -94,7 +94,7 @@ void BlockLocalPositionEstimator::lidarCorrect()
 	if (beta > BETA_TABLE[n_y_lidar]) {
 		if (_lidarFault < FAULT_MINOR) {
 			_lidarFault = FAULT_MINOR;
-			mavlink_and_console_log_info(&mavlink_log_pub, "[lpe] lidar fault,  beta %5.2f", double(beta));
+			//mavlink_and_console_log_info(&mavlink_log_pub, "[lpe] lidar fault,  beta %5.2f", double(beta));
 		}
 
 		// abort correction
