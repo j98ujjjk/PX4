@@ -490,8 +490,8 @@ void Ekf2::task_main()
 			// angles and velocities before pushing into the estimator
 
 			// copy the data from the selected IMU data to local variables
-			now_imu_gyro_time_us = sensors.gyro_timestamp[_imu_select];
-			now_imu_accel_time_us =  sensors.accelerometer_timestamp[_imu_select];
+			now_imu_gyro_time_us = now;
+			now_imu_accel_time_us =  now;
 			for (unsigned index=0; index <=2; index++) {
 				unsigned offset = _imu_select * 3;
 				now_imu_ang_rate(index) = sensors.gyro_rad_s[offset + index];
