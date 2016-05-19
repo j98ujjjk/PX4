@@ -141,6 +141,10 @@ private:
 	int		_actuator_armed_sub = -1;
 	int		_vehicle_land_detected_sub = -1;
 
+	// used to select which IMU is used and whether pre-integrated data from the sensor driver is used
+	int _imu_select; // selects IMU (0,1,2)
+	int _imu_mode; // 0 uses angular rate and acceleration data, 1 uses delta angle and velocity data from the IMU driver
+
 	bool            _prev_landed = true; // landed status from the previous frame
 
 	float _acc_hor_filt = 0.0f; 	// low-pass filtered horizontal acceleration
@@ -253,6 +257,10 @@ private:
 	control::BlockParamFloat _acc_bias_init;	// 1-sigma accelerometer bias uncertainty at switch-on (m/s**2)
 	control::BlockParamFloat _ang_err_init;		// 1-sigma uncertainty in tilt angle after gravity vector alignment (rad)
 
+	// IMU selection
+	control::BlockParamInt _param_imu_select;		// selects the IMU sensor used (0,1,2)
+	control::BlockParamInt _param_imu_mode;	// set to 1 to use delta angles and velocities, set to 0 to use angular rates and accelerations
+
 	int update_subscriptions();
 
 };
@@ -340,7 +348,9 @@ Ekf2::Ekf2():
 	_tau_pos(this, "EKF2_TAU_POS", false, &_params->pos_Tau),
 	_gyr_bias_init(this, "EKF2_GBIAS_INIT", false, &_params->switch_on_gyro_bias),
 	_acc_bias_init(this, "EKF2_ABIAS_INIT", false, &_params->switch_on_accel_bias),
-	_ang_err_init(this, "EKF2_ANGERR_INIT", false, &_params->initial_tilt_err)
+	_ang_err_init(this, "EKF2_ANGERR_INIT", false, &_params->initial_tilt_err),
+	_param_imu_select(this, "EKF2_IMU_USE", false, &_imu_select),
+	_param_imu_mode(this, "EKF2_IMU_MODE", false, &_imu_mode)
 {
 
 }
@@ -385,6 +395,20 @@ void Ekf2::task_main()
 	optical_flow_s optical_flow = {};
 	distance_sensor_s range_finder = {};
 	vehicle_land_detected_s vehicle_land_detected = {};
+
+	// variables used to convert IMU data
+	uint64_t now_imu_gyro_time_us = 0;
+	uint64_t now_imu_accel_time_us = 0;
+	Vector3f now_imu_ang_rate = {};
+	Vector3f now_imu_accel = {};
+	uint64_t last_imu_gyro_time_us = 0;
+	uint64_t last_imu_accel_time_us = 0;
+	Vector3f last_imu_ang_rate = {};
+	Vector3f last_imu_accel = {};
+	uint64_t delta_time_gyro_us = 0;
+	uint64_t delta_time_accel_us = 0;
+	Vector3f delta_angle = {};
+	Vector3f delta_velocity = {};
 
 	while (!_task_should_exit) {
 		int ret = px4_poll(fds, sizeof(fds) / sizeof(fds[0]), 1000);
@@ -451,13 +475,56 @@ void Ekf2::task_main()
 		if (_replay_mode) {
 			now = sensors.timestamp;
 
+			// copy data from the first IMU to local variables
+			delta_time_gyro_us = sensors.gyro_integral_dt[0];
+			delta_time_accel_us =  sensors.accelerometer_integral_dt[0];
+			for (unsigned index=0; index <=2; index++) {
+				delta_angle(index) = sensors.gyro_integral_rad[index];
+				delta_velocity(index) = sensors.accelerometer_integral_m_s[index];
+			}
+
+		} else if (_imu_mode == 0) {
+			now = hrt_absolute_time();
+
+			// we need to convert the imu angular rate and accelerometer data into delta
+			// angles and velocities before pushing into the estimator
+
+			// copy the data from the selected IMU data to local variables
+			now_imu_gyro_time_us = sensors.gyro_timestamp[_imu_select];
+			now_imu_accel_time_us =  sensors.accelerometer_timestamp[_imu_select];
+			for (unsigned index=0; index <=2; index++) {
+				unsigned offset = _imu_select * 3;
+				now_imu_ang_rate(index) = sensors.gyro_rad_s[offset + index];
+				now_imu_accel(index) = sensors.accelerometer_m_s2[offset + index];
+			}
+
+			// convert angular rates to delta angles using trapezoidal integration
+			delta_time_gyro_us = now_imu_gyro_time_us - last_imu_gyro_time_us;
+			delta_angle = (now_imu_ang_rate + last_imu_ang_rate) * 5e-7f * delta_time_gyro_us;
+			last_imu_ang_rate = now_imu_ang_rate;
+			last_imu_gyro_time_us = now_imu_gyro_time_us;
+
+			// convert accelerations to delta velocities using trapezoidal integration
+			delta_time_accel_us = now_imu_accel_time_us - last_imu_accel_time_us;
+			delta_velocity = (now_imu_accel + last_imu_accel) * 5e-7f * delta_time_accel_us;
+			last_imu_accel = now_imu_accel;
+			last_imu_accel_time_us = now_imu_accel_time_us;
+
 		} else {
 			now = hrt_absolute_time();
+
+			// copy the from the selected IMU data to local variables
+			delta_time_gyro_us = sensors.gyro_integral_dt[_imu_select];
+			delta_time_accel_us =  sensors.accelerometer_integral_dt[_imu_select];
+			unsigned offset = _imu_select * 3;
+			for (unsigned index=0; index <=2; index++) {
+				delta_angle(index) = sensors.gyro_integral_rad[offset + index];
+				delta_velocity(index) = sensors.accelerometer_integral_m_s[offset + index];
+			}
 		}
 
 		// push imu data into estimator
-		_ekf.setIMUData(now, sensors.gyro_integral_dt[0], sensors.accelerometer_integral_dt[0],
-				&sensors.gyro_integral_rad[0], &sensors.accelerometer_integral_m_s[0]);
+		_ekf.setIMUData(now, delta_time_gyro_us, delta_time_accel_us, &delta_angle(0), &delta_velocity(0));
 
 		// read mag data
 		_ekf.setMagData(sensors.magnetometer_timestamp[0], &sensors.magnetometer_ga[0]);
@@ -800,13 +867,14 @@ void Ekf2::task_main()
 		if (publish_replay_message) {
 			struct ekf2_replay_s replay = {};
 			replay.time_ref = now;
-			replay.gyro_integral_dt = sensors.gyro_integral_dt[0];
-			replay.accelerometer_integral_dt = sensors.accelerometer_integral_dt[0];
 			replay.magnetometer_timestamp = sensors.magnetometer_timestamp[0];
 			replay.baro_timestamp = sensors.baro_timestamp[0];
-			memcpy(&replay.gyro_integral_rad[0], &sensors.gyro_integral_rad[0], sizeof(replay.gyro_integral_rad));
-			memcpy(&replay.accelerometer_integral_m_s[0], &sensors.accelerometer_integral_m_s[0],
-			       sizeof(replay.accelerometer_integral_m_s));
+			replay.gyro_integral_dt = delta_time_gyro_us;
+			replay.accelerometer_integral_dt = delta_time_gyro_us;
+			for (unsigned index=0; index <=2; index++) {
+				replay.gyro_integral_rad[index] = delta_angle(index);
+				replay.accelerometer_integral_m_s[index] = delta_velocity(index);
+			}
 			memcpy(&replay.magnetometer_ga[0], &sensors.magnetometer_ga[0], sizeof(replay.magnetometer_ga));
 			replay.baro_alt_meter = sensors.baro_alt_meter[0];
 

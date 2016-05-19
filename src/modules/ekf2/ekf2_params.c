@@ -754,3 +754,22 @@ PARAM_DEFINE_FLOAT(EKF2_ABIAS_INIT, 0.2f);
  * @decimal 3
  */
 PARAM_DEFINE_FLOAT(EKF2_ANGERR_INIT, 0.1f);
+
+/**
+ * Determines the IMU used by the EKF - DO NOT CHANGE IN FLIGHT AND REBOOT BEFORE FLYING
+ *
+ * @group EKF2
+ * @value 0 First IMU
+ * @value 1 Second IMU - may not be available
+ * @value 2 Third IMU - may not be available
+ */
+PARAM_DEFINE_INT32(EKF2_IMU_USE, 0);
+
+/**
+ * Determines the primary source of height data used by the EKF - DO NOT CHANGE IN FLIGHT AND REBOOT BEFORE FLYING
+ *
+ * @group EKF2
+ * @value 0 Use angular rate and accelerometer data and converts to delta angles and velocities required by ekf2
+ * @value 1 Use pre-calculated delta angle and velocity data
+ */
+PARAM_DEFINE_INT32(EKF2_IMU_MODE, 0);
