@@ -723,6 +723,16 @@ PARAM_DEFINE_FLOAT(EKF2_TAU_VEL, 0.5f);
 PARAM_DEFINE_FLOAT(EKF2_TAU_POS, 0.25f);
 
 /**
+ * Frequency of the position derivative filter used to calculate local position velocity output. Set to a negative number to inhibit use of the alternative output filter. A value of 20 is recommended for initial experimentation. Larger values make the velocity output noiser.
+ *
+ * @group EKF2
+ * @max 50.0
+ * @unit rad/sec
+ * @decimal 1
+ */
+PARAM_DEFINE_FLOAT(EKF2_DERIV_FREQ, -1.0f);
+
+/**
  * 1-sigma IMU gyro switch-on bias
  *
  * @group EKF2

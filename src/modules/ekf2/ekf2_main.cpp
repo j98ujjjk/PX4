@@ -251,6 +251,7 @@ private:
 	// output predictor filter time constants
 	control::BlockParamFloat _tau_vel;	// time constant used by the output velocity complementary filter (s)
 	control::BlockParamFloat _tau_pos;	// time constant used by the output position complementary filter (s)
+	control::BlockParamFloat _deriv_freq;	// Output position derivative smoothing filter frequency (rad/sec)
 
 	// IMU switch on bias paameters
 	control::BlockParamFloat _gyr_bias_init;	// 1-sigma gyro bias uncertainty at switch-on (rad/sec)
@@ -258,8 +259,8 @@ private:
 	control::BlockParamFloat _ang_err_init;		// 1-sigma uncertainty in tilt angle after gravity vector alignment (rad)
 
 	// IMU selection
-	control::BlockParamInt _param_imu_select;		// selects the IMU sensor used (0,1,2)
-	control::BlockParamInt _param_imu_mode;	// set to 1 to use delta angles and velocities, set to 0 to use angular rates and accelerations
+	control::BlockParamInt _param_imu_select;	// selects the IMU sensor used (0,1,2)
+	control::BlockParamInt _param_imu_mode;		// set to 1 to use delta angles and velocities, set to 0 to use angular rates and accelerations
 
 	int update_subscriptions();
 
@@ -346,6 +347,7 @@ Ekf2::Ekf2():
 	_flow_pos_z(this, "EKF2_OF_POS_Z", false, &_params->flow_pos_body(2)),
 	_tau_vel(this, "EKF2_TAU_VEL", false, &_params->vel_Tau),
 	_tau_pos(this, "EKF2_TAU_POS", false, &_params->pos_Tau),
+	_deriv_freq(this, "EKF2_DERIV_FREQ", false, &_params->pos_deriv_freq),
 	_gyr_bias_init(this, "EKF2_GBIAS_INIT", false, &_params->switch_on_gyro_bias),
 	_acc_bias_init(this, "EKF2_ABIAS_INIT", false, &_params->switch_on_accel_bias),
 	_ang_err_init(this, "EKF2_ANGERR_INIT", false, &_params->initial_tilt_err),
