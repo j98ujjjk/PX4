@@ -782,4 +782,4 @@ PARAM_DEFINE_INT32(EKF2_IMU_USE, 0);
  * @value 0 Use angular rate and accelerometer data and converts to delta angles and velocities required by ekf2
  * @value 1 Use pre-calculated delta angle and velocity data
  */
-PARAM_DEFINE_INT32(EKF2_IMU_MODE, 0);
+PARAM_DEFINE_INT32(EKF2_IMU_MODE, 1);
