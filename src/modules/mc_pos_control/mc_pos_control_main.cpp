@@ -266,6 +266,13 @@ private:
 	float _takeoff_thrust_sp;
 	bool control_vel_enabled_prev;	/**< previous loop was in velocity controlled mode (control_state.flag_control_velocity_enabled) */
 
+	// counters for reset events on position and velocity states
+	// they are used to identify a reset event
+	uint8_t _z_reset_counter;
+	uint8_t _xy_reset_counter;
+	uint8_t _vz_reset_counter;
+	uint8_t _vxy_reset_counter;
+
 	/**
 	 * Update our local parameter cache.
 	 */
@@ -407,7 +414,11 @@ MulticopterPositionControl::MulticopterPositionControl() :
 	_vel_z_lp(0),
 	_acc_z_lp(0),
 	_takeoff_thrust_sp(0.0f),
-	control_vel_enabled_prev(false)
+	control_vel_enabled_prev(false),
+	_z_reset_counter(0),
+	_xy_reset_counter(0),
+	_vz_reset_counter(0),
+	_vxy_reset_counter(0)
 {
 	// Make the quaternion valid for control state
 	_ctrl_state.q[0] = 1.0f;
@@ -680,6 +691,34 @@ MulticopterPositionControl::poll_subscriptions()
 
 	if (updated) {
 		orb_copy(ORB_ID(vehicle_local_position), _local_pos_sub, &_local_pos);
+
+		// check if a reset event has happened
+		// if the vehicle is in manual mode we will shift the setpoints of the
+		// states which were reset. In auto mode we do not shift the setpoints
+		// since we want the vehicle to track the actual desired setpoints.
+		if (_control_mode.flag_control_manual_enabled) {
+			if (_z_reset_counter != _local_pos.z_reset_counter) {
+				_local_pos_sp.z += _local_pos.delta_z;
+				_z_reset_counter = _local_pos.z_reset_counter;
+			}
+
+			if (_xy_reset_counter != _local_pos.xy_reset_counter) {
+				_local_pos_sp.x += _local_pos.delta_x;
+				_local_pos_sp.y += _local_pos.delta_y;
+				_xy_reset_counter = _local_pos.xy_reset_counter;
+			}
+
+			if (_vz_reset_counter != _local_pos.vz_reset_counter) {
+				_local_pos_sp.vz += _local_pos.delta_vz;
+				_vz_reset_counter = _local_pos.vz_reset_counter;
+			}
+
+			if (_vxy_reset_counter != _local_pos.vxy_reset_counter) {
+				_local_pos_sp.vx += _local_pos.delta_vx;
+				_local_pos_sp.vy += _local_pos.delta_vy;
+				_vxy_reset_counter = _local_pos.vxy_reset_counter;
+			}
+		}
 	}
 }
 

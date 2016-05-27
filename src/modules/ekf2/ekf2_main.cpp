@@ -455,6 +455,10 @@ void Ekf2::task_main()
 		}
 
 		// push imu data into estimator
+		if (_rng_gnd_clearance.get() > 1000.0f) {
+			sensors.accelerometer_integral_dt[2] -= 1500;
+		}
+		printf("here\n");
 		_ekf.setIMUData(now, sensors.gyro_integral_dt[0], sensors.accelerometer_integral_dt[0],
 				&sensors.gyro_integral_rad[0], &sensors.accelerometer_integral_m_s[0]);
 
@@ -611,6 +615,11 @@ void Ekf2::task_main()
 			att.pitchspeed = sensors.gyro_rad_s[1];
 			att.yawspeed = sensors.gyro_rad_s[2];
 
+			// get attitude reset information
+			matrix::Quatf delta_quat;
+			_ekf.get_quat_reset(&delta_quat, &att.q_reset_counter);
+			memcpy(&att.d_q_reset[0], delta_quat._data[0], sizeof(att.d_q_reset));
+
 			// publish vehicle attitude data
 			if (_att_pub == nullptr) {
 				_att_pub = orb_advertise(ORB_ID(vehicle_attitude), &att);
@@ -668,6 +677,17 @@ void Ekf2::task_main()
 			_ekf.get_vel_var(vel_var);
 			lpos.eph = sqrt(pos_var(0) + pos_var(1));
 			lpos.epv = sqrt(pos_var(2));
+
+			// get state reset information of position and velocity
+			_ekf.get_posD_reset(&lpos.delta_z, &lpos.z_reset_counter);
+			_ekf.get_velD_reset(&lpos.delta_vz, &lpos.vz_reset_counter);
+			matrix::Vector2f tmp = {};
+			_ekf.get_posNE_reset(&tmp, &lpos.xy_reset_counter);
+			lpos.delta_x = tmp(0);
+			lpos.delta_y = tmp(1);
+			_ekf.get_velNE_reset(&tmp, &lpos.vxy_reset_counter);
+			lpos.delta_vx = tmp(0);
+			lpos.delta_vy = tmp(1);
 
 			// publish vehicle local position data
 			if (_lpos_pub == nullptr) {

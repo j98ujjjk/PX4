@@ -15,6 +15,9 @@ float32 mag_vibration	# Value between 0 and 1 indicating vibration. A value of 0
 float32[3] rate_offsets	# Offsets of the body angular rates from zero
 float32[9] R		# Rotation matrix, body to world, (Tait-Bryan, NED)
 float32[4] q		# Quaternion (NED)
+float32[4] d_q_reset # Amount by which the quaternion q has changed du to a reset
+# quat_after_reset = quat_before_reset * d_q_reset
+uint8 q_reset_counter	# counter for reset events on attitude quaternion q
 float32[3] g_comp	# Compensated gravity vector
 bool R_valid		# Rotation matrix valid
 bool q_valid		# Quaternion valid

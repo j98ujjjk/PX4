@@ -10,10 +10,25 @@ float32 x				# North position in NED earth-fixed frame, (metres)
 float32 y				# East position in NED earth-fixed frame, (metres)
 float32 z				# Down position (negative altitude) in NED earth-fixed frame, (metres)
 
+# Position reset information
+float32 delta_x
+float32 delta_y
+float32 delta_z
+
 # Velocity in NED frame
 float32 vx 				# North velocity in NED earth-fixed frame, (metres/sec)
 float32 vy				# East velocity in NED earth-fixed frame, (metres/sec)
 float32 vz				# Down velocity in NED earth-fixed frame, (metres/sec)
+
+# Velocity reset information
+float32 delta_vx
+float32 delta_vy
+float32 delta_vz
+
+uint8 xy_reset_counter
+uint8 z_reset_counter
+uint8 vxy_reset_counter
+uint8 vz_reset_counter
 
 # Heading
 float32 yaw				# Euler yaw angle transforming the tangent plane relative to NED earth-fixed frame, -PI..+PI,  (radians) 
