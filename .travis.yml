@@ -14,9 +14,13 @@ matrix:
     - os: linux
       sudo: required
       env: GCC_VER=4.8
+      services:
+        - docker
     - os: linux
       sudo: required
       env: GCC_VER=4.9
+      services:
+        - docker
     - os: osx
       osx_image: xcode7
       sudo: true
