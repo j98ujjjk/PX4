@@ -21,7 +21,6 @@ matrix:
       osx_image: xcode7
       sudo: true
 
-
 cache:
   directories:
     - $HOME/.ccache
@@ -32,10 +31,6 @@ before_install:
          docker pull danielagar/docker-px4-dev
       && git clone git://github.com/PX4/CI-Tools.git
       && ./CI-Tools/s3cmd-configure
-      && mkdir -p ~/bin
-      && wget -O ~/bin/astyle https://github.com/PX4/astyle/releases/download/2.05.1/astyle-linux && chmod +x ~/bin/astyle
-      && astyle --version
-      && if [ "$CXX" = "g++" ]; then export CXX="g++-4.9" CC="gcc-4.9"; fi
       ;
     elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
          brew tap PX4/homebrew-px4
@@ -58,7 +53,10 @@ env:
 script:
   - git submodule update --quiet --init --recursive
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
-      docker run --rm -v `pwd`:`pwd`:rw -v $HOME/.ccache:$HOME/.ccache:rw -e CCACHE_DIR=$HOME/.ccache -w=`pwd` --user=$UID -it danielagar/docker-px4-dev /bin/bash -c "make check VECTORCONTROL=1";
+      ccache -z
+      && docker run --rm -v `pwd`:`pwd`:rw -v $HOME/.ccache:$HOME/.ccache:rw -e CCACHE_DIR=$HOME/.ccache -w=`pwd` --user=$UID -it danielagar/docker-px4-dev /bin/bash -c "make check VECTORCONTROL=1";
+      && ccache -s
+      ;
     elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
       make check_posix_sitl_default;
     fi
